@@ -1,18 +1,86 @@
-# masstoppe_copypaste
-Allows copy-paste between mobile device and PC interchangeably
+# 📋 masstoppe_copypaste
 
-# How to use (with autostart in Windows)
+Seamlessly sync and share your clipboard between your mobile device and Windows PC using a lightweight local Python server and Tailscale.
 
-1. Download ***clip_server.pyw*** and put it as a shortcut in shell:starup:
-    1.1 WIN+R type **shell:startup**
-    1.2 Create new shortcut -> run with source path to pythonw.exe. To find that go into Powershell and type: (Get-Command pythonw).Source.
-    1.3 Go into properties of your new shortcut. In the Target field, enter both the path to pythonw.exe and the path to your script, enclosed in quotation marks with a space in between. In the Start field, specify the folder where the script is located.
-    1.4 Click Apply and OK. To verify success: double-click the shortcut to test launch it, and run the following in PowerShell: **Get-NetTCPConnection -LocalPort 8765**.
+---
 
-2. Both devices; Install and connect your mobile device and PC on Tailscale with same account.
+## ⚡ Prerequisites
 
-3. On phone: Install HTTP Shortcuts from Play Store
+- **Python 3.x** installed on Windows
+- **Python dependency**:
+  ```powershell
+  pip install pyperclip
+  ```
+- **[Tailscale](https://tailscale.com/)** installed and signed into the same account on both PC & Phone
+- **[HTTP Shortcuts](https://play.google.com/store/apps/details?id=ch.rmy.android.http_shortcuts)** installed on your Android phone
 
-4. Create Shortcut 1: "Send to PC" Press + and select Standard HTTP Shortcut. URL: http:// :8765/clip Method: POST Go to the Request Body: Select Custom Text. Tap the variable icon ({}) and select the default variable clipboard. Under Feedback/Actions: Activate a short Toast ("Sent to PC"). Create Shortcut 2: "Download from PC" Create a new shortcut. URL: http:// :8765/clip Method: GET During Response Action: Turn on Copy to clipboard. Under Feedback/Actions: Enable Toast ("Copied from PC"). Verification: Manually tap the "Send to PC" shortcut in the app and paste (Ctrl+V) into your computer's notes to confirm that the text appeared.
+---
 
+## 🚀 Setup Guide
 
+### Step 1: Windows Autostart Configuration
+
+Make the background server run automatically on boot:
+
+1. Press <kbd>Win</kbd> + <kbd>R</kbd>, type `shell:startup`, and press <kbd>Enter</kbd>.
+2. Right-click inside the folder $\rightarrow$ **New** $\rightarrow$ **Shortcut**.
+3. Find your `pythonw.exe` path by running this in PowerShell:
+   ```powershell
+   (Get-Command pythonw).Source
+   ```
+4. Configure the shortcut properties:
+   - **Target**: Enter the path to `pythonw.exe` followed by the path to `clip_server.pyw` (both in quotes):
+     ```text
+     "C:\Path\To\pythonw.exe" "C:\Path\To\clip_server.pyw"
+     ```
+   - **Start in**: The directory where `clip_server.pyw` is stored:
+     ```text
+     "C:\Path\To\"
+     ```
+5. Click **Apply** and **OK**.
+
+> [!TIP]
+> **Verify Server Running**: Double-click the shortcut to test it. Then run:
+> ```powershell
+> Get-NetTCPConnection -LocalPort 8765
+> ```
+> If the state shows `Listen`, your server is active!
+
+---
+
+### Step 2: Tailscale Network Connection
+
+1. Ensure **Tailscale** is connected on both your PC and Mobile.
+2. Note down your PC's **Tailscale IP address** (e.g., `100.x.y.z`).
+
+---
+
+### Step 3: Phone Setup (HTTP Shortcuts App)
+
+Open **HTTP Shortcuts** on your phone and create two shortcuts:
+
+#### 📤 Shortcut 1: "Send to PC" (Upload Phone Clipboard $\rightarrow$ PC)
+- **Shortcut Type**: Standard HTTP Shortcut
+- **Method**: `POST`
+- **URL**: `http://<YOUR_PC_TAILSCALE_IP>:8765/clip`
+- **Request Body**:
+  - Type: **Custom Text**
+  - Tap the `{}` variable icon and select **Clipboard**
+- **Feedback / Actions**:
+  - Show Toast: `"Sent to PC"`
+
+#### 📥 Shortcut 2: "Download from PC" (Fetch PC Clipboard $\rightarrow$ Phone)
+- **Shortcut Type**: Standard HTTP Shortcut
+- **Method**: `GET`
+- **URL**: `http://<YOUR_PC_TAILSCALE_IP>:8765/clip`
+- **Response Actions**:
+  - Enable **Copy to clipboard**
+- **Feedback / Actions**:
+  - Show Toast: `"Copied from PC"`
+
+---
+
+## 🧪 Testing
+
+1. On your phone, copy any text and tap **"Send to PC"**. Press <kbd>Ctrl</kbd> + <kbd>V</kbd> on your PC to verify.
+2. On your PC, copy any text. Tap **"Download from PC"** on your phone and paste to verify.
